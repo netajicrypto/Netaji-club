@@ -2,6 +2,11 @@
 
 This ZIP contains the frontend, CSS, JavaScript, Firebase configuration placeholders, Firestore rules, and starter Cloud Functions.
 
+## Latest update — live question sync prototype
+- Admin portal now starts an automatic question rotation: a randomized set is chosen at quiz start, and the next question is published every 10 seconds.
+- The player portal listens for the current question and refreshes its question/timer; the admin portal also reflects the current question and participants.
+- This frontend synchronization currently uses `localStorage`, so it works between the admin and player pages opened under the same website origin in the same browser/device. It does **not** synchronize different users on different devices. For a real public event, the Firebase callable backend must be completed and deployed; do not use this local demo as a production quiz.
+
 ## Important truth about this package
 - The UI is styled to closely follow the approved six-screen mockup: cream/gold/saffron colors, maroon headings, floral motifs, player quiz, leaderboard, admin dashboard, winners, and reports.
 - `public/assets/design-reference-collage.png` preserves the approved mockup image. `saraswati-hero.png` is cropped from that image as an artwork asset.

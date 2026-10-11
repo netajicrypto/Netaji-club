@@ -14,7 +14,7 @@
 <form id="createQuizForm" class="admin-form">
 <label>Quiz Name<input id="adminQuizName" value="Saraswati Puja Quiz 2027" required></label>
 <div class="form-two"><label>Quiz Code<input id="adminQuizCode" value="PUJA2027" maxlength="32" required></label><label>Questions per player<input id="questionLimit" type="number" min="1" max="100" value="10" required></label></div>
-<div class="form-two"><label>Seconds per question<input id="secondsPerQuestion" type="number" min="5" max="180" value="15"></label><label>Points per correct answer<input id="pointsPerCorrect" type="number" min="1" max="100" value="10"></label></div>
+<div class="form-two"><label>Seconds per question (fixed 10 sec)<input id="secondsPerQuestion" type="number" min="10" max="10" value="10" readonly></label><label>Points per correct answer<input id="pointsPerCorrect" type="number" min="1" max="100" value="10"></label></div>
 <div class="form-two"><label>Speed bonus<input id="speedBonus" type="number" min="0" max="50" value="5"></label><label>Max participants<input id="maxParticipants" type="number" min="2" max="500" value="30"></label></div>
 <label class="check-label"><input id="randomQuestions" type="checkbox" checked> Random questions (no repeats per player)</label>
 <label class="check-label"><input id="randomOptions" type="checkbox" checked> Shuffle answer options</label>
