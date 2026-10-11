@@ -1,11 +1,8 @@
 {
   "hosting": {
-    "public": "public",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "headers": [
-      {"source": "**/*.@(js|css)", "headers": [{"key":"Cache-Control","value":"no-cache"}]}
-    ]
+    "public": ".",
+    "ignore": ["firebase.json", "firestore.*", "README.md", "**/.*", "**/node_modules/**"],
+    "headers": [{"source": "**/*.@(js|css)", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}]
   },
-  "functions": [{"source":"functions","codebase":"default"}],
-  "firestore": {"rules":"firestore.rules","indexes":"firestore.indexes.json"}
+  "firestore": {"rules": "firestore.rules", "indexes": "firestore.indexes.json"}
 }

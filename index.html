@@ -36,14 +36,14 @@
     </section>
     <section class="content-grid">
       <article class="card panel">
-        <div class="section-heading"><div><span class="eyebrow">LIVE EXPERIENCE</span><h2>प्रतियोगिता में शामिल हों</h2></div><span id="connectionBadge" class="badge">Demo Mode</span></div>
+        <div class="section-heading"><div><span class="eyebrow">LIVE EXPERIENCE</span><h2>प्रतियोगिता में शामिल हों</h2></div><span id="connectionBadge" class="badge">Live</span></div>
         <p>एडमिन से Quiz Code लें। प्रतियोगिता शुरू होने पर प्रश्न और टाइमर यहाँ दिखाई देंगे।</p>
         <div class="status-line"><span class="status-dot"></span><span id="gameStatus">गेम का इंतज़ार है</span></div>
         <button class="btn btn-outline" id="showLeaderboard">लीडरबोर्ड देखें</button>
       </article>
       <article class="card panel">
         <span class="eyebrow">IMPORTANT</span><h2>गेम के नियम</h2>
-        <ul class="rules"><li>हर खिलाड़ी को उसकी परीक्षा में प्रश्न दोबारा नहीं मिलेगा।</li><li>सही उत्तर, समय और स्कोर सर्वर पर सत्यापित किए जाएँगे।</li><li>फाइनल रैंकिंग में कुल अंक और टाई-ब्रेकर नियम लागू होंगे।</li></ul>
+        <ul class="rules"><li>सभी खिलाड़ियों को एक ही समय पर एक जैसे प्रश्न मिलेंगे, हर प्रश्न का समय तय है।</li><li>जिसके सबसे ज़्यादा उत्तर सही होंगे वह विजेता होगा।</li><li>अंक बराबर होने पर जिसने सही उत्तर कम कुल समय में दिए, वह आगे रहेगा।</li></ul>
       </article>
     </section>
     <section id="playerGame" class="card panel hidden">
@@ -52,11 +52,11 @@
       <h3 id="questionText">प्रश्न यहाँ दिखाई देगा</h3>
       <div id="options" class="options-grid"></div>
       <p id="answerMessage" class="answer-message" aria-live="polite"></p>
-      <div class="score-strip"><div>🏆 <small>आपका स्कोर</small><strong id="myScore">0</strong></div><div>📊 <small>वर्तमान रैंक</small><strong id="myRank">—</strong></div></div>
+      <div class="score-strip"><div>🏆 <small>दिए गए उत्तर</small><strong id="myScore">0</strong></div><div>📊 <small>फाइनल रैंक</small><strong id="myRank">—</strong></div></div>
     </section>
     <section id="leaderboardPanel" class="card panel hidden">
       <div class="section-heading"><div><span class="eyebrow">LIVE RANKING</span><h2>Live Leaderboard</h2></div><span class="badge badge-live">● LIVE</span></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>नाम</th><th>स्कोर</th><th>औसत समय</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="4">अभी कोई परिणाम नहीं है।</td></tr></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>नाम</th><th>सही उत्तर</th><th>कुल समय</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="4">अभी कोई परिणाम नहीं है।</td></tr></tbody></table></div>
     </section>
     <section id="winnerPanel" class="card winner-panel hidden">
       <div class="winner-icon">🏆</div><span class="eyebrow">THE WINNERS</span><h2>विजेता</h2><p>आयोजक: नेताजी क्लब</p><div id="winnerCards" class="winner-cards"></div>

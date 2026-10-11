@@ -7,51 +7,69 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
+    function quiz(q) { return get(/databases/$(database)/documents/quizzes/$(q)).data; }
+    // Question i opens at startedAt + lead + i*sec (server time)
+    function qStart(qz, i) { return qz.startedAt + duration.value(qz.lead + i * qz.sec, 's'); }
 
-    // Public clients may read only safe quiz metadata. Never expose answer keys.
-    match /quizzes/{quizId} {
-      allow read: if resource.data.public == true || isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
     match /admins/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
-      allow write: if false; // provision admins with trusted Admin SDK only
+      allow write: if false;   // add admins manually from Firebase Console
     }
-    match /questionBanks/{id} {
-      allow read, write: if isAdmin();
+
+    // Server-time helper so every phone can sync its clock
+    match /pings/{uid} {
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['t']) && request.resource.data.t == request.time;
     }
-    match /participants/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false; // use validated Cloud Functions
+
+    match /quizzes/{q} {
+      allow get: if true;            // players find the quiz by its code
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+
+      // Question text opens ONLY when its time starts. Answer keys are admin-only.
+      match /questions/{i} {
+        allow read: if isAdmin() || (signedIn() && quiz(q).status == 'live'
+          && request.time >= qStart(quiz(q), int(i)));
+        allow write: if isAdmin();
+      }
+      match /keys/{i} { allow read, write: if isAdmin(); }
+
+      match /players/{uid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['name', 'joinedAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
+          && request.resource.data.joinedAt == request.time
+          && quiz(q).status != 'completed';
+        allow update, delete: if isAdmin();
+      }
+
+      // One answer per question per player, create-only, server timestamp, inside the question window
+      match /answers/{aid} {
+        allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['uid', 'q', 'sel', 'at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q is int && request.resource.data.sel is int
+          && request.resource.data.sel >= 0 && request.resource.data.sel <= 3
+          && request.resource.data.q >= 0 && request.resource.data.q < quiz(q).count
+          && aid == request.auth.uid + '_' + string(request.resource.data.q)
+          && request.resource.data.at == request.time
+          && exists(/databases/$(database)/documents/quizzes/$(q)/players/$(request.auth.uid))
+          && quiz(q).status == 'live'
+          && request.time >= qStart(quiz(q), request.resource.data.q)
+          && request.time < qStart(quiz(q), request.resource.data.q + 1);
+        allow update, delete: if isAdmin();
+      }
+
+      match /results/{uid} {
+        allow read: if signedIn();
+        allow write: if isAdmin();
+      }
     }
-    match /rounds/{id} {
-      allow read: if isAdmin();
-      allow write: if false;
-    }
-    match /questionAssignments/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false;
-    }
-    match /answers/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false; // answer submission goes through server-side function
-    }
-    match /scores/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false;
-    }
-    match /leaderboards/{id} {
-      allow read: if true; // only publish safe display fields here
-      allow write: if false;
-    }
-    match /winners/{id} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /quizEvents/{id} {
-      allow read: if isAdmin();
-      allow write: if false;
-    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
