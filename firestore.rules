@@ -8,40 +8,47 @@ service cloud.firestore {
         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
 
-    // Public clients may read only safe quiz metadata. Never expose answer keys.
+    // Only non-sensitive quiz metadata may be publicly read. Writes go through Cloud Functions.
     match /quizzes/{quizId} {
       allow read: if resource.data.public == true || isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow write: if false;
     }
     match /admins/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
-      allow write: if false; // provision admins with trusted Admin SDK only
+      allow write: if false;
     }
     match /questionBanks/{id} {
       allow read, write: if isAdmin();
     }
     match /participants/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false; // use validated Cloud Functions
+      allow write: if false;
+    }
+    match /quizAccess/{id} {
+      allow read, write: if isAdmin();
     }
     match /rounds/{id} {
       allow read: if isAdmin();
       allow write: if false;
     }
+    // Public assignment documents must never contain correctIndex or answer keys.
     match /questionAssignments/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow read: if isAdmin() || signedIn();
       allow write: if false;
+    }
+    match /assignmentKeys/{id} {
+      allow read, write: if false;
     }
     match /answers/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
-      allow write: if false; // answer submission goes through server-side function
+      allow write: if false;
     }
     match /scores/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.authUid == request.auth.uid);
       allow write: if false;
     }
     match /leaderboards/{id} {
-      allow read: if true; // only publish safe display fields here
+      allow read: if true;
       allow write: if false;
     }
     match /winners/{id} {
