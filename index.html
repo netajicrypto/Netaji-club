@@ -1,1 +1,69 @@
-
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#fff4d8">
+  <title>नेताजी क्लब | सरस्वती पूजा क्विज़ प्रतियोगिता</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="top-garland" aria-hidden="true">✿ ❋ ✿ ❋ ✿ ❋ ✿ ❋ ✿ ❋ ✿ ❋ ✿ ❋ ✿</div>
+  <header class="site-header">
+    <div class="brand-mark" aria-label="नेताजी क्लब का अस्थायी लोगो">NC</div>
+    <div><small>Organized by</small><h1>नेताजी क्लब</h1><p>ज्ञान • संस्कृति • एकता</p></div>
+    <button class="icon-button" id="menuButton" aria-label="मेन्यू">☰</button>
+  </header>
+  <main>
+    <section class="hero card">
+      <div class="hero-art"><img src="assets/saraswati-hero.png" alt="सरस्वती पूजा की कलात्मक झलक"></div>
+      <div class="hero-copy">
+        <div class="eyebrow">🪷 ज्ञान का उत्सव, साथ मिलकर 🪷</div>
+        <h2>सरस्वती पूजा<br><span>क्विज़ प्रतियोगिता</span></h2>
+        <p>अपनी जानकारी परखें, दोस्तों के साथ खेलें और विजेता बनें।</p>
+        <form id="joinForm" class="join-box">
+          <h3>Join the Quiz</h3>
+          <label for="quizCode" class="sr-only">Quiz Code</label>
+          <input id="quizCode" placeholder="Enter Quiz Code" maxlength="32" required>
+          <label for="playerName" class="sr-only">आपका नाम</label>
+          <input id="playerName" placeholder="अपना नाम लिखें" maxlength="40" required>
+          <button class="btn btn-primary" type="submit">Join Quiz</button>
+          <small>👤 अपने नाम से प्रतियोगिता में शामिल हों</small>
+        </form>
+      </div>
+    </section>
+    <section class="feature-row">
+      <div>🎯 <b>Live Quiz</b></div><div>🌼 <b>Fun & Learning</b></div><div>🏆 <b>Exciting Competition</b></div><div>🪷 <b>नेताजी क्लब</b></div>
+    </section>
+    <section class="content-grid">
+      <article class="card panel">
+        <div class="section-heading"><div><span class="eyebrow">LIVE EXPERIENCE</span><h2>प्रतियोगिता में शामिल हों</h2></div><span id="connectionBadge" class="badge">Demo Mode</span></div>
+        <p>एडमिन से Quiz Code लें। प्रतियोगिता शुरू होने पर प्रश्न और टाइमर यहाँ दिखाई देंगे।</p>
+        <div class="status-line"><span class="status-dot"></span><span id="gameStatus">गेम का इंतज़ार है</span></div>
+        <button class="btn btn-outline" id="showLeaderboard">लीडरबोर्ड देखें</button>
+      </article>
+      <article class="card panel">
+        <span class="eyebrow">IMPORTANT</span><h2>गेम के नियम</h2>
+        <ul class="rules"><li>हर खिलाड़ी को उसकी परीक्षा में प्रश्न दोबारा नहीं मिलेगा।</li><li>सही उत्तर, समय और स्कोर सर्वर पर सत्यापित किए जाएँगे।</li><li>फाइनल रैंकिंग में कुल अंक और टाई-ब्रेकर नियम लागू होंगे।</li></ul>
+      </article>
+    </section>
+    <section id="playerGame" class="card panel hidden">
+      <div class="section-heading"><div><span class="eyebrow" id="roundLabel">ROUND 1</span><h2 id="questionCounter">Question 1/10</h2></div><div class="timer" id="timer">15</div></div>
+      <div class="progress-track"><div id="progressBar"></div></div>
+      <h3 id="questionText">प्रश्न यहाँ दिखाई देगा</h3>
+      <div id="options" class="options-grid"></div>
+      <p id="answerMessage" class="answer-message" aria-live="polite"></p>
+      <div class="score-strip"><div>🏆 <small>आपका स्कोर</small><strong id="myScore">0</strong></div><div>📊 <small>वर्तमान रैंक</small><strong id="myRank">—</strong></div></div>
+    </section>
+    <section id="leaderboardPanel" class="card panel hidden">
+      <div class="section-heading"><div><span class="eyebrow">LIVE RANKING</span><h2>Live Leaderboard</h2></div><span class="badge badge-live">● LIVE</span></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>नाम</th><th>स्कोर</th><th>औसत समय</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="4">अभी कोई परिणाम नहीं है।</td></tr></tbody></table></div>
+    </section>
+    <section id="winnerPanel" class="card winner-panel hidden">
+      <div class="winner-icon">🏆</div><span class="eyebrow">THE WINNERS</span><h2>विजेता</h2><p>आयोजक: नेताजी क्लब</p><div id="winnerCards" class="winner-cards"></div>
+      <button class="btn btn-primary" id="viewFullLeaderboard">View Full Leaderboard</button>
+    </section>
+  </main>
+  <footer>🪷 <b>आयोजक: नेताजी क्लब</b><span>ज्ञान • संस्कृति • एकता</span></footer>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="js/app.js"></script>
+</body></html>
