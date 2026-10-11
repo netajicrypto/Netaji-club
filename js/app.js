@@ -1,68 +1,21 @@
-import {firebaseConfigured, db} from "./firebase.js";
-import {doc, getDoc, collection, addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {firebaseConfigured} from "./firebase.js";
 const $=id=>document.getElementById(id);
-const toast=(m)=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3200)};
-$("connectionBadge").textContent=firebaseConfigured?"Firebase Connected":"Demo Mode";
-let quiz=null, player=null, questions=[], currentIndex=0, answerLocked=false, timerInterval=null, unsubscribe=null;
-const demoKey="netajiQuizDemoState";
-function getDemo(){try{return JSON.parse(sessionStorage.getItem(demoKey)||"{}")}catch{return {}}}
-function setDemo(v){sessionStorage.setItem(demoKey,JSON.stringify(v))}
-async function join(code,name){
-  if(firebaseConfigured){
-    const snap=await getDoc(doc(db,"quizzes",code));
-    if(!snap.exists()) throw new Error("यह Quiz Code नहीं मिला।");
-    quiz={id:snap.id,...snap.data()};
-    if(quiz.status==="completed") throw new Error("यह प्रतियोगिता समाप्त हो चुकी है।");
-    // Production player identity/assignment must be created by a callable Cloud Function.
-    throw new Error("Firebase जुड़ा है। Player join function deploy होने के बाद लाइव जॉइन चालू होगा। README देखें।");
-  }
-  const state=getDemo();quiz=state.quiz||{id:code,name:"Saraswati Puja Quiz 2027",status:"waiting",settings:{questionLimit:10,secondsPerQuestion:15,pointsPerCorrect:10,speedBonus:5},questions:state.questions||[]};
-  if(code.toUpperCase()!==String(quiz.id).toUpperCase() && code.toUpperCase()!=="PUJA2027") throw new Error("Demo mode में Quiz Code PUJA2027 इस्तेमाल करें।");
-  player={id:crypto.randomUUID(),name:name.trim(),score:0,answers:[],joinedAt:Date.now()};
-  const players=state.players||[];players.push(player);state.players=players;setDemo(state);
-  $("playerGame").classList.remove("hidden");$("gameStatus").textContent=`${name} जुड़ गए हैं`;
-  toast("आप डेमो गेम में शामिल हो गए।");
-  if(quiz.questions?.length) loadQuestion(0); else $("questionText").textContent="एडमिन के प्रश्न जोड़ने और गेम शुरू करने का इंतज़ार करें।";
-  renderBoard();
+const KEY="netajiQuizLiveState";
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3000)};
+let playerId=null, playerName="", tick=null, lastQuestionToken="", answerLocked=false;
+function read(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch{return {}}}
+function write(s){localStorage.setItem(KEY,JSON.stringify(s));}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("connectionBadge").textContent="Live Sync Demo";
+$("gameStatus").textContent="Quiz शुरू होने का इंतज़ार है";
+$("joinForm").addEventListener("submit",e=>{e.preventDefault();const code=$("quizCode").value.trim().toUpperCase(),name=$("playerName").value.trim();const s=read();if(!s.quiz||code!==String(s.quiz.id||"").toUpperCase()){toast("यह Quiz Code नहीं मिला। Admin portal में Quiz Code चेक करें।");return}if(s.quiz.status==="completed"){toast("यह क्विज़ समाप्त हो चुका है।");return}playerId=crypto.randomUUID();playerName=name;const p={id:playerId,name,score:0,answers:[],joinedAt:Date.now(),status:"Connected"};s.players=s.players||[];s.players.push(p);s.lastJoinAt=Date.now();write(s);$("playerGame").classList.remove("hidden");$("gameStatus").textContent=`${name}, आप क्विज़ में शामिल हैं`;$ ("joinForm").querySelector("button[type=submit]").disabled=true;toast("आप क्विज़ में शामिल हो गए।");render();if(tick)clearInterval(tick);tick=setInterval(render,250);});
+function render(){if(!playerId)return;const s=read(),q=s.quiz;if(!q)return;if(q.status==="completed"){$("playerGame").classList.add("hidden");$("winnerPanel").classList.remove("hidden");const ps=(s.players||[]).slice().sort((a,b)=>b.score-a.score);$("winnerCards").innerHTML=ps.slice(0,3).map((p,i)=>`<div class="winner-card ${i===0?"first":""}"><span class="medal">${["🥇","🥈","🥉"][i]}</span><strong>${esc(p.name)}</strong><span class="points">${p.score||0}</span><small>${["प्रथम","द्वितीय","तृतीय"][i]} स्थान</small></div>`).join("");renderBoard(s);return}
+if(q.status!=="live"||!q.questions?.length){$("gameStatus").textContent="एडमिन के क्विज़ शुरू करने का इंतज़ार है";return}
+$("playerGame").classList.remove("hidden");const i=Number(q.currentIndex||0),question=q.questions[i];if(!question){$("questionText").textContent="अगले प्रश्न का इंतज़ार करें…";return}const token=`${q.id}:${q.runId}:${i}:${q.questionStartedAt}`;const elapsed=Math.floor((Date.now()-Number(q.questionStartedAt||Date.now()))/1000),left=Math.max(0,10-elapsed);$("timer").textContent=left;$("questionCounter").textContent=`Question ${i+1}/${q.questions.length}`;$("roundLabel").textContent="LIVE QUIZ";$("progressBar").style.width=`${((i+1)/q.questions.length)*100}%`;
+if(token!==lastQuestionToken){lastQuestionToken=token;answerLocked=false;$("answerMessage").textContent="";$("questionText").textContent=question.question;$("options").innerHTML="";question.options.forEach((o,j)=>{const b=document.createElement("button");b.className="option-btn";b.textContent=String.fromCharCode(65+j)+". "+o;b.onclick=()=>answer(j,token);$("options").append(b)});}
+const p=(s.players||[]).find(x=>x.id===playerId);if(p){$("myScore").textContent=p.score||0;const sorted=(s.players||[]).slice().sort((a,b)=>b.score-a.score);$("myRank").textContent=sorted.findIndex(x=>x.id===playerId)+1}renderBoard(s);
 }
-$("joinForm").addEventListener("submit",async e=>{e.preventDefault();try{await join($("quizCode").value.trim(),$("playerName").value.trim())}catch(err){toast(err.message||"जुड़ने में समस्या हुई।")}});
-function loadQuestion(i){
-  if(!quiz?.questions?.length)return;
-  if(i>=Math.min(quiz.settings?.questionLimit||10,quiz.questions.length)){finishDemo();return}
-  currentIndex=i;answerLocked=false;const q=quiz.questions[i];
-  $("questionCounter").textContent=`Question ${i+1}/${Math.min(quiz.settings?.questionLimit||10,quiz.questions.length)}`;
-  $("roundLabel").textContent="ROUND 1";$("questionText").textContent=q.question;
-  $("progressBar").style.width=`${(i+1)/Math.min(quiz.settings?.questionLimit||10,quiz.questions.length)*100}%`;
-  $("options").innerHTML="";
-  q.options.forEach((o,index)=>{const b=document.createElement("button");b.className="option-btn";b.textContent=String.fromCharCode(65+index)+".  "+o;b.onclick=()=>submitDemoAnswer(index,b);$("options").append(b)});
-  startTimer(quiz.settings?.secondsPerQuestion||15);
-}
-function startTimer(n){clearInterval(timerInterval);let left=n;$("timer").textContent=left;timerInterval=setInterval(()=>{left--;$("timer").textContent=left;if(left<=0){clearInterval(timerInterval);if(!answerLocked){answerLocked=true;$("answerMessage").textContent="समय समाप्त";setTimeout(()=>loadQuestion(currentIndex+1),900)}}},1000)}
-function submitDemoAnswer(index,button){
-  if(answerLocked)return;answerLocked=true;clearInterval(timerInterval);
-  const q=quiz.questions[currentIndex],correct=index===q.correctIndex;
-  document.querySelectorAll("#options button").forEach((b,i)=>{b.disabled=true;if(i===q.correctIndex)b.classList.add("correct")});
-  if(!correct)button.classList.add("wrong");
-  const elapsed=(quiz.settings?.secondsPerQuestion||15)-Number($("timer").textContent);
-  const points=correct?(quiz.settings?.pointsPerCorrect||10)+Math.max(0,Math.floor((quiz.settings?.secondsPerQuestion||15)-elapsed))*Math.floor((quiz.settings?.speedBonus||0)/(quiz.settings?.secondsPerQuestion||15)):0;
-  player.score+=points;player.answers.push({questionId:q.id||String(currentIndex),correct,elapsed,points});
-  $("myScore").textContent=player.score;$("answerMessage").textContent=correct?`सही जवाब! +${points} अंक`:"गलत जवाब";
-  const s=getDemo();s.players=(s.players||[]).map(p=>p.id===player.id?player:p);setDemo(s);renderBoard();
-  setTimeout(()=>loadQuestion(currentIndex+1),1200);
-}
-function renderBoard(){
-  const state=getDemo(),players=state.players|| (player?[player]:[]);
-  players.sort((a,b)=>b.score-a.score);
-  $("leaderboardBody").innerHTML=players.length?players.map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${p.score||0}</td><td>—</td></tr>`).join(""):'<tr><td colspan="4">अभी कोई परिणाम नहीं है।</td></tr>';
-  if(player)$("myRank").textContent=players.findIndex(p=>p.id===player.id)+1;
-}
-function finishDemo(){
- clearInterval(timerInterval);$("playerGame").classList.add("hidden");$("winnerPanel").classList.remove("hidden");
- const state=getDemo(),players=(state.players||[]).sort((a,b)=>b.score-a.score);
- $("winnerCards").innerHTML=players.slice(0,3).map((p,i)=>`<div class="winner-card ${i===0?"first":""}"><span class="medal">${["🥇","🥈","🥉"][i]}</span><strong>${escapeHtml(p.name)}</strong><span class="points">${p.score||0}</span><small>${i+1===1?"प्रथम":i+1===2?"द्वितीय":"तृतीय"} स्थान</small></div>`).join("");
- state.lastResults=players.map((p,i)=>({...p,rank:i+1}));setDemo(state);renderBoard();toast("डेमो राउंड समाप्त। Firebase पर परिणाम सेव करने के लिए सेटअप पूरा करें।");
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-$("showLeaderboard").onclick=()=>{$("leaderboardPanel").classList.remove("hidden");$("leaderboardPanel").scrollIntoView({behavior:"smooth"})};
-$("viewFullLeaderboard").onclick=()=>{$("leaderboardPanel").classList.remove("hidden");$("leaderboardPanel").scrollIntoView({behavior:"smooth"})};
-if(firebaseConfigured){$("connectionBadge").textContent="Firebase Configured";$("gameStatus").textContent="Firebase configured — deploy backend functions to enable live play."}
+function answer(index,token){if(answerLocked)return;const s=read(),q=s.quiz;if(!q||q.status!=="live"||`${q.id}:${q.runId}:${q.currentIndex}:${q.questionStartedAt}`!==token)return;const question=q.questions[q.currentIndex];const p=(s.players||[]).find(x=>x.id===playerId);if(!p)return;answerLocked=true;const correct=index===question.correctIndex,points=correct?Number(q.settings?.pointsPerCorrect||10):0;p.score=(p.score||0)+points;p.answers=p.answers||[];p.answers.push({questionIndex:q.currentIndex,correct,points,selectedIndex:index,at:Date.now()});p.status="Answered";write(s);document.querySelectorAll("#options button").forEach((b,j)=>{b.disabled=true;if(j===question.correctIndex)b.classList.add("correct")});if(!correct)document.querySelectorAll("#options button")[index]?.classList.add("wrong");$("answerMessage").textContent=correct?`सही जवाब! +${points} अंक`:"जवाब दर्ज हो गया";render();}
+function renderBoard(s=read()){const ps=(s.players||[]).slice().sort((a,b)=>(b.score||0)-(a.score||0));$("leaderboardBody").innerHTML=ps.length?ps.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td>${p.score||0}</td><td>—</td></tr>`).join(""):'<tr><td colspan="4">अभी कोई परिणाम नहीं है।</td></tr>';if(playerId)$("myRank").textContent=ps.findIndex(p=>p.id===playerId)+1}
+$("showLeaderboard").onclick=()=>{$("leaderboardPanel").classList.remove("hidden");$("leaderboardPanel").scrollIntoView({behavior:"smooth"})};$("viewFullLeaderboard").onclick=$("showLeaderboard").onclick;
+window.addEventListener("storage",e=>{if(e.key===KEY)render()});
